@@ -1,34 +1,25 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUtilities } from "../features/auth/utilityThunk";
 import GenericChart from "../components/GenericChart";
-import ReusableTable from "../components/ReusableTable";
 import { formBillData } from "../utils/chartUtils";
+import AGGridTable from "../components/AGGrid/AGGridTable";
+import { getUtiltiyColumns } from "../components/AGGrid/AGGrigUtilityColumns";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
 
   const { utilities, loading, error } = useSelector((state) => state.utility);
+  const [quickFilterText, setQuickFilterText] = useState("");
 
   useEffect(() => {
     dispatch(getUtilities());
   }, [dispatch]);
 
-  const columns = [
-    { key: "type", label: "Type" },
-    { key: "usage_units", label: "Usage (units)" },
-    { key: "amount_paid", label: "Amount Paid" },
-    { key: "bill_month", label: "Month" },
-    { key: "paid_on", label: "Paid On" },
-    { key: "remarks", label: "Remarks" },
-  ];
-
-  const searchKeys = ["type", "bill_month", "remarks"];
-
-  const transformedData = utilities?.map((item) => ({
-    ...item,
-    paid_on: new Date(item.paid_on).toLocaleDateString(),
-  }));
+  const columns = getUtiltiyColumns(
+    () => {}, // No edit in dashboard
+    () => {} // No delete in dashboard
+  );
 
   const chartConfig = utilities?.length ? formBillData(utilities) : null;
 
@@ -47,7 +38,9 @@ const Dashboard = () => {
       {chartConfig && (
         <div className="flex flex-col md:flex-row gap-8 justify-center items-stretch mb-10">
           <div className="w-full md:w-1/2 bg-white shadow-md rounded-2xl p-4 border border-gray-200">
-            <h3 className="text-xl font-semibold mb-4 text-center text-green-700">Usage by Month</h3>
+            <h3 className="text-xl font-semibold mb-4 text-center text-green-700">
+              Usage by Month
+            </h3>
             <GenericChart
               type="bar"
               data={chartConfig.data}
@@ -56,7 +49,9 @@ const Dashboard = () => {
           </div>
 
           <div className="w-full md:w-1/2 bg-white shadow-md rounded-2xl p-4 border border-gray-200">
-            <h3 className="text-xl font-semibold mb-4 text-center text-green-700">Usage Distribution</h3>
+            <h3 className="text-xl font-semibold mb-4 text-center text-green-700">
+              Usage Distribution
+            </h3>
             <GenericChart
               type="pie"
               data={chartConfig.data}
@@ -66,15 +61,20 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200">
-        <ReusableTable
-          data={transformedData}
-          columns={columns}
-          searchKeys={searchKeys}
-          title="Utility Bill Details"
-          fileName="utility-bills"
-        />
-      </div>
+<div className="bg-white shadow-md rounded-2xl p-6 border border-gray-200 w-full">
+  <div className="flex items-center justify-between mb-4">
+    <h3 className="text-xl font-semibold text-green-700">Utility Details Table</h3>
+    <input
+      type="text"
+      placeholder="Search..."
+      className="p-2 border rounded w-full md:w-1/4"
+      value={quickFilterText}
+      onChange={(e) => setQuickFilterText(e.target.value)}
+    />
+  </div>
+
+  <AGGridTable rowData={utilities} columnDefs={columns} quickFilterText={quickFilterText} />
+</div>
     </div>
   );
 };
