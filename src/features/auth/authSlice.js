@@ -2,7 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
     user: null,
-    token: null
+    token: null,
+    isLoading: true
 };
 
 
@@ -29,16 +30,22 @@ const authSlice = createSlice({
 
         },
         loadUserFromStorage: (state) => {
-
             const savedAuth = localStorage.getItem("auth");
-
-
-            if(savedAuth) {
+            if (savedAuth) {
+              try {
                 const parsed = JSON.parse(savedAuth);
-                state.user = parsed.user;
-                state.token = parsed.token;
+                if (parsed?.user && parsed?.token) {
+                  state.user = parsed.user;
+                  state.token = parsed.token;
+                } else {
+                  localStorage.removeItem("auth"); // Corrupt or empty data
+                }
+              } catch (err) {
+                localStorage.removeItem("auth",err); // Invalid JSON
+              }
             }
-        }
+            state.isLoading = false; // Done loading
+          }
     }
 });
 
